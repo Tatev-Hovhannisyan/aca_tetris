@@ -18,6 +18,17 @@
       &.marked {
         background-color: #fb4b4b;
       }
+      
     }
   }
+}
+
+.frozen {
+  background-color: rgb(247, 5, 5);
+}
+.game-over {
+  font-size: 24px;
+  color: red;
+  text-align: center;
+  margin: 20px;
 }

@@ -1,45 +1,64 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "./App.scss";
 
 function App() {
-  console.log("Rerendered!");
   const width = 10;
   const height = 20;
+
   const [selectedRow, setSelectedRow] = useState(0);
   const [board, setBoard] = useState(() =>
     Array(height)
       .fill(null)
       .map(() => Array(width).fill(null))
   );
+  const [gameOver, setGameOver] = useState(false);
+  const selectedJ = 5;
 
-  let selectedJ = 5;
-  setTimeout(() => {
-    const newBoard = board.map((row, rowIndex) => {      
-      if ((rowIndex + 1) % height === selectedRow) {
-        return row.fill(false);
+  useEffect(() => {
+    if (gameOver) return;
+
+    const timer = setTimeout(() => {
+      const newBoard = board.map((row) => [...row]);
+      const atBottom = selectedRow === height - 1;
+      const belowIsFrozen =
+        !atBottom && board[selectedRow + 1][selectedJ] === false;
+
+      if (selectedRow > 0) {
+        newBoard[selectedRow - 1][selectedJ] = null;
       }
 
-      if (rowIndex === selectedRow) {
-        return row.map((_, cellIndex) => {
-          if (cellIndex === selectedJ) {
-            return true;
-          }
-        });
+      if (atBottom || belowIsFrozen) {
+        if (selectedRow === 0 && board[selectedRow][selectedJ] === false) {
+          setGameOver(true);
+          return;
+        }
+
+        newBoard[selectedRow][selectedJ] = false;
+        setBoard(newBoard);
+        setSelectedRow(0);
+        return;
       }
 
-      return row;
-    });
+      newBoard[selectedRow][selectedJ] = true;
+      setBoard(newBoard);
+      setSelectedRow((prev) => prev + 1);
+    }, 100);
 
-    setBoard(newBoard);
-    setSelectedRow((selectedRow + 1) % height);
-  }, 200);
+    return () => clearTimeout(timer);
+  }, [selectedRow, board, gameOver]);
 
   return (
     <div className="container">
-      {board.map((row) => (
-        <div className="row">
-          {row.map((cell) => (
-            <div className={`cell ${cell === true ? "marked" : ""}`}></div>
+      {gameOver && <div className="game-over">Game Over</div>}
+      {board.map((row, i) => (
+        <div className="row" key={i}>
+          {row.map((cell, j) => (
+            <div
+              className={`cell ${cell === true ? "marked" : ""} ${
+                cell === false ? "frozen" : ""
+              }`}
+              key={j}
+            ></div>
           ))}
         </div>
       ))}
