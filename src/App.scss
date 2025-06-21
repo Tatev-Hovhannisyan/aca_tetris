@@ -1,7 +1,8 @@
 .container {
+  position: relative; 
   display: flex;
   flex-direction: column;
-  border: 3px solid #fb4b4b;
+  border: 3px solid #088518;
   border-radius: 5px;
   width: fit-content;
   margin: auto;
@@ -11,24 +12,34 @@
     width: fit-content;
 
     .cell {
-      border: 1px solid gray;
+      border: 1px solid rgb(104, 102, 102);
       width: 30px;
       height: 30px;
 
       &.marked {
-        background-color: #fb4b4b;
+        background-color: #0df505;
       }
-      
     }
   }
 }
 
 .frozen {
-  background-color: rgb(247, 5, 5);
+  background-color: rgb(45, 218, 11);
 }
+
 .game-over {
-  font-size: 24px;
-  color: red;
-  text-align: center;
-  margin: 20px;
+  position: absolute;       
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%); 
+  font-size: 28px;
+  color: rgb(252, 252, 252);
+  background: rgba(245, 8, 8, 0.925);
+  padding: 20px 30px;
+  border-radius: 8px;
+  z-index: 10;
+  pointer-events: none;
+width: 300px;
+text-align: center;
 }
+  

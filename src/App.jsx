@@ -1,6 +1,12 @@
 import { useEffect, useState } from "react";
 import "./App.scss";
 
+function clearActiveCell(board) {
+  return board.map((row) =>
+    row.map((cell) => (cell === true ? null : cell))
+  );
+}
+
 function App() {
   const width = 10;
   const height = 20;
@@ -11,23 +17,20 @@ function App() {
       .fill(null)
       .map(() => Array(width).fill(null))
   );
-  const [gameOver, setGameOver] = useState(false);
-  const selectedJ = 5;
+  const [isGameOver, setGameOver] = useState(false);
+  const [selectedJ, setSelectedJ] = useState(Math.floor(Math.random() * width));
 
   useEffect(() => {
-    if (gameOver) return;
+    if (isGameOver) return;
 
     const timer = setTimeout(() => {
-      const newBoard = board.map((row) => [...row]);
-      const atBottom = selectedRow === height - 1;
-      const belowIsFrozen =
-        !atBottom && board[selectedRow + 1][selectedJ] === false;
+      let newBoard = clearActiveCell(board);
 
-      if (selectedRow > 0) {
-        newBoard[selectedRow - 1][selectedJ] = null;
-      }
+      const isAtBottom = selectedRow === height - 1;
+      const isFrozen =
+        !isAtBottom && board[selectedRow + 1][selectedJ] === false;
 
-      if (atBottom || belowIsFrozen) {
+      if (isAtBottom || isFrozen) {
         if (selectedRow === 0 && board[selectedRow][selectedJ] === false) {
           setGameOver(true);
           return;
@@ -36,6 +39,7 @@ function App() {
         newBoard[selectedRow][selectedJ] = false;
         setBoard(newBoard);
         setSelectedRow(0);
+        setSelectedJ(Math.floor(Math.random() * width));
         return;
       }
 
@@ -45,11 +49,45 @@ function App() {
     }, 100);
 
     return () => clearTimeout(timer);
-  }, [selectedRow, board, gameOver]);
+  }, [selectedRow, board, isGameOver]);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (isGameOver) return;
+
+      const isLeft = e.key === "ArrowLeft";
+      const isRight = e.key === "ArrowRight";
+
+      let newBoard = clearActiveCell(board);
+
+      if (
+        isLeft &&
+        selectedJ > 0 &&
+        board[selectedRow][selectedJ - 1] !== false
+      ) {
+        newBoard[selectedRow][selectedJ - 1] = true;
+        setSelectedJ((prev) => prev - 1);
+      } else if (
+        isRight &&
+        selectedJ < width - 1 &&
+        board[selectedRow][selectedJ + 1] !== false
+      ) {
+        newBoard[selectedRow][selectedJ + 1] = true;
+        setSelectedJ((prev) => prev + 1);
+      } else {
+         newBoard[selectedRow][selectedJ] = true;
+      }
+
+      setBoard(newBoard);
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [selectedJ, selectedRow, board, isGameOver]);
 
   return (
     <div className="container">
-      {gameOver && <div className="game-over">Game Over</div>}
+      {isGameOver && <div className="game-over">Game Over</div>}
       {board.map((row, i) => (
         <div className="row" key={i}>
           {row.map((cell, j) => (
