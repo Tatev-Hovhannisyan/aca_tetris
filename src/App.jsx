@@ -129,7 +129,7 @@ export default function App() {
     }
     const timer = setTimeout(moveDown, 500); 
     return () => clearTimeout(timer); 
-  }, [moveDown, isGameOver, isPaused]); 
+  }, [ isGameOver, isPaused]); 
 
 
   useEffect(() => {
