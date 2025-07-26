@@ -63,49 +63,20 @@ export const validateDownMove = (board, shape) => {
   });
 };
 
-export function validateRotation(
-  board,
-  originalShapeCoords,
-  rotatedShapeMatrix
-) {
-  // Find the top-left corner of the original shape's bounding box.
-  // This is crucial because the rotation happens relative to its current position.
-  let minI = Infinity;
-  let minJ = Infinity;
-
-  originalShapeCoords.forEach(({ i, j }) => {
-    if (i < minI) minI = i;
-    if (j < minJ) minJ = j;
-  });
-
-  // Loop through the rotated shape matrix to check each potential new cell.
-  for (let i = 0; i < rotatedShapeMatrix.length; i++) {
-    for (let j = 0; j < rotatedShapeMatrix[0].length; j++) {
-      if (!rotatedShapeMatrix[i][j]) continue;
-
-      const boardI = minI + i;
-      const boardJ = minJ + j;
-
-      // 1. Check if the rotated cell is out of horizontal bounds or below the board.
-      // We allow cells to be above the board (boardI < 0) as shapes start there.
-      if (boardJ < 0 || boardJ >= BOARD_WIDTH || boardI >= BOARD_HEIGHT) {
-        throw new Error("Rotation is out of bounds (hit wall or bottom)");
-      }
-
-      // 2. Check for collision with already landed blocks.
-      const isCellCurrentlyPartOfOriginalShape = checkIsShapePart(
-        originalShapeCoords,
-        boardI,
-        boardJ
-      );
-
-      if (
-        boardI >= 0 &&
-        board[boardI][boardJ]?.isMarked &&
-        !isCellCurrentlyPartOfOriginalShape
-      ) {
-        throw new Error("Rotation collides with another landed shape");
-      }
+export function validateRotation(board, originalShapeCoords, newShapeCoords) {
+  for (const {i, j} of newShapeCoords) {
+    // Allow coordinates above the board (negative i)
+    if (j < 0 || j >= BOARD_WIDTH || i >= BOARD_HEIGHT) {
+      throw new Error("Rotation would go out of bounds");
+    }
+    
+    // Check for collisions with existing blocks (but ignore original shape positions)
+    const isOriginalPosition = originalShapeCoords.some(
+      cell => cell.i === i && cell.j === j
+    );
+    
+    if (i >= 0 && board[i][j]?.isMarked && !isOriginalPosition) {
+      throw new Error("Rotation would collide with existing block");
     }
   }
-}
+  }

@@ -224,27 +224,66 @@ export const move = (board, shapeObj, direction) => {
 
 export function rotate(board, shape) {
   const { coords, shape: shapeMatrix, name, color, rotationState } = shape;
-
   const nextRotationState = (rotationState + 1) % 4;
-
-  const minI = Math.min(...coords.map(({ i }) => i));
-  const minJ = Math.min(...coords.map(({ j }) => j));
+  
+  // Calculate the pivot point (center of the shape)
+  const avgI = coords.reduce((sum, {i}) => sum + i, 0) / coords.length;
+  const avgJ = coords.reduce((sum, {j}) => sum + j, 0) / coords.length;
+  const pivotI = Math.round(avgI);
+  const pivotJ = Math.round(avgJ);
 
   const rotatedMatrix = rotateSHape(shapeMatrix);
-
+  
+  // Calculate new coordinates relative to pivot
   const newCoords = [];
   for (let i = 0; i < rotatedMatrix.length; i++) {
     for (let j = 0; j < rotatedMatrix[0].length; j++) {
       if (rotatedMatrix[i][j]) {
-        newCoords.push({ i: minI + i, j: minJ + j });
+        // Calculate offset from original position
+        const offsetI = i - Math.floor(shapeMatrix.length / 2);
+        const offsetJ = j - Math.floor(shapeMatrix[0].length / 2);
+        
+        newCoords.push({ 
+          i: pivotI + offsetI, 
+          j: pivotJ + offsetJ 
+        });
       }
     }
   }
 
-  validateRotation(board, coords, rotatedMatrix, newCoords);
+  // Try wall kicks if rotation would go out of bounds
+  const kickOffsets = [
+    {i: 0, j: 0},   // no kick
+    {i: 0, j: -1},  // left kick
+    {i: 0, j: 1},   // right kick
+    {i: -1, j: 0},  // up kick
+    {i: 1, j: 0},   // down kick
+  ];
 
-  const newBoard = cloneAffectedRows(board, coords, newCoords);
+  let validRotation = null;
 
+  for (const offset of kickOffsets) {
+    const kickedCoords = newCoords.map(({i, j}) => ({
+      i: i + offset.i,
+      j: j + offset.j
+    }));
+
+    try {
+      validateRotation(board, coords, kickedCoords);
+      validRotation = kickedCoords;
+      break;
+    } catch (e) {
+      continue;
+    }
+  }
+
+  if (!validRotation) {
+    throw new Error("Rotation failed after all kick attempts");
+  }
+
+  const newBoard = cloneAffectedRows(board, coords, validRotation);
+
+  // Clear old position
   coords.forEach(({ i, j }) => {
     if (i >= 0 && i < BOARD_HEIGHT && j >= 0 && j < BOARD_WIDTH) {
       newBoard[i][j] = {
@@ -256,7 +295,8 @@ export function rotate(board, shape) {
     }
   });
 
-  newCoords.forEach(({ i, j }) => {
+  // Draw new position
+  validRotation.forEach(({ i, j }) => {
     if (i >= 0 && i < BOARD_HEIGHT && j >= 0 && j < BOARD_WIDTH) {
       newBoard[i][j] = {
         isMarked: true,
@@ -270,7 +310,7 @@ export function rotate(board, shape) {
   return {
     newBoard,
     newShape: {
-      coords: newCoords,
+      coords: validRotation,
       shape: rotatedMatrix,
       color,
       name,
