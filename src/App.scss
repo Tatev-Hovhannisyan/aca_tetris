@@ -1,14 +1,27 @@
-/* App.scss */
-
 body {
   margin: 0;
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background-color: #282c34;
-  font-family: 'Inter', sans-serif;
-  color: #fff;
+  background-color: #2c3e50;
+  background-image: repeating-linear-gradient(
+      0deg,
+      #34495e 0px,
+      #34495e 2px,
+      transparent 2px,
+      transparent 40px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      #34495e 0px,
+      #34495e 2px,
+      transparent 2px,
+      transparent 40px
+    );
+  background-size: 40px 40px;
+  font-family: "Inter", sans-serif;
+  color: #e0e0e0;
   overflow: hidden;
 }
 
@@ -16,19 +29,32 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  border: 4px solid #61dafb;
+  border: 4px solid #3498db;
   border-radius: 12px;
   width: fit-content;
   margin: auto;
   position: relative;
-  box-shadow: 0 0 25px rgba(0, 255, 255, 0.7);
+  box-shadow: 0 0 25px rgba(52, 152, 219, 0.7);
   padding: 15px;
-  background-color: #333;
+  background-color: rgba(255, 255, 255, 0.95);
 
   --cell-size: 35px;
+  --cell-size-mini: 18px;
 
   @media (max-width: 768px) {
     --cell-size: 25px;
+    --cell-size-mini: 12px;
+  }
+}
+
+.board-and-info {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: center;
   }
 }
 
@@ -39,9 +65,10 @@ body {
   width: calc(var(--cell-size) * var(--board-width));
   height: calc(var(--cell-size) * var(--board-height));
   background-color: #1a1a1a;
-  border: 2px solid #0ea3df;
+  border: 2px solid #2ecc71;
   border-radius: 8px;
   overflow: hidden;
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
 
   --board-width: 10;
   --board-height: 20;
@@ -50,26 +77,24 @@ body {
 .cell {
   width: var(--cell-size);
   height: var(--cell-size);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-sizing: border-box;
-  background-color: #444;
-  border-radius: 4px;
-  transition: background-color 0.1s ease-out, box-shadow 0.1s ease-out, border-radius 0.1s ease-out, opacity 0.3s ease-out, transform 0.3s ease-out;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background-color: #2a2a2a;
+  border-radius: 2px;
+  transition: background-color 0.1s ease-out, box-shadow 0.1s ease-out,
+    border-radius 0.1s ease-out, opacity 0.3s ease-out, transform 0.3s ease-out;
   transform-origin: center center;
 }
 
 .cell.marked {
-  border-radius: 4px;
+  border-radius: 2px;
   transform: none;
-  box-shadow:
-    inset 0 0 15px 6px rgba(255, 255, 255, 0.5),
-    inset 2px 2px 5px rgba(255, 255, 255, 0.3),
-    inset -2px -2px 5px rgba(0, 0, 0, 0.3),
-    inset -2px 2px 5px rgba(0, 0, 0, 0.2),
-    inset 2px -2px 5px rgba(255, 255, 255, 0.2),
-    inset 0 0 0 2px rgba(255, 255, 255, 0.1),
-    inset 0 0 0 4px rgba(0, 0, 0, 0.1),
-    0 8px 20px rgba(0, 0, 0, 0.8);
+  box-shadow: inset 0 0 25px 10px rgba(255, 255, 255, 1),
+    inset 4px 4px 10px rgba(255, 255, 255, 0.95),
+    inset -4px -4px 10px rgba(0, 0, 0, 0.8),
+    inset -4px 4px 10px rgba(0, 0, 0, 0.6),
+    inset 4px -4px 10px rgba(255, 255, 255, 0.9),
+    inset 0 0 0 4px rgba(255, 255, 255, 0.6), inset 0 0 0 8px rgba(0, 0, 0, 0.4),
+    0 12px 40px rgba(0, 0, 0, 0.8);
 }
 
 .cell.clearing {
@@ -86,14 +111,14 @@ body {
   font-weight: bold;
   text-align: center;
   color: white;
-  background: rgba(255, 0, 0, 0.95);
+  background: rgba(189, 2, 2, 0.95);
   padding: 30px 60px;
   border-radius: 20px;
   z-index: 10;
   width: auto;
   min-width: 300px;
-  box-shadow: 0 0 40px rgba(255, 0, 0, 0.8);
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 0 40px rgba(85, 2, 2, 0.8);
+  text-shadow: 2px 2px 4px rgba(94, 2, 2, 0.5);
 }
 
 .game-paused {
@@ -115,25 +140,94 @@ body {
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
 }
 
-.score {
-  font-size: 2em;
-  margin-top: 20px;
-  color: #61dafb;
-  font-weight: bold;
-  background-color: #222;
+.side-info {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  align-items: center;
+  padding: 10px;
+  background-color: rgba(0, 0, 0, 0.7);
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+.score-level-display {
+  text-align: center;
+  background-color: rgba(0, 0, 0, 0.5);
   padding: 12px 25px;
   border-radius: 10px;
   box-shadow: 0 0 12px rgba(0, 255, 255, 0.4);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.score,
+.level {
+  font-size: 1.8em;
+  color: #61dafb;
+  font-weight: bold;
+  margin: 5px 0;
+}
+
+.next-shape-container {
+  background-color: rgba(0, 0, 0, 0.5);
+  padding: 15px;
+  border-radius: 10px;
+  box-shadow: 0 0 12px rgba(0, 255, 255, 0.4);
+  text-align: center;
+  width: 100%;
+  box-sizing: border-box;
+
+  h3 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    color: #e0e0e0;
+    font-size: 1.2em;
+  }
+}
+
+.next-shape-grid {
+  display: grid;
+  grid-template-rows: repeat(4, var(--cell-size-mini));
+  grid-template-columns: repeat(4, var(--cell-size-mini));
+  width: calc(var(--cell-size-mini) * 4);
+  height: calc(var(--cell-size-mini) * 4);
+  margin: 0 auto;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.cell-mini {
+  width: var(--cell-size-mini);
+  height: var(--cell-size-mini);
+  border: 0.5px solid rgba(255, 255, 255, 0.03);
+  box-sizing: border-box;
+  background-color: #444444;
+  border-radius: 2px;
+}
+
+.cell-mini.marked-mini {
+  border-radius: 2px;
+  box-shadow: inset 0 0 15px 6px rgba(255, 255, 255, 1),
+    inset 2px 2px 5px rgba(255, 255, 255, 0.9),
+    inset -2px -2px 5px rgba(0, 0, 0, 0.6),
+    inset -2px 2px 5px rgba(0, 0, 0, 0.4),
+    inset 2px -2px 5px rgba(255, 255, 255, 0.8),
+    inset 0 0 0 2px rgba(255, 255, 255, 0.5), inset 0 0 0 4px rgba(0, 0, 0, 0.3),
+    0 6px 15px rgba(0, 0, 0, 0.7);
 }
 
 .controls {
-  margin-top: 20px;
+  margin-top: 350px; 
   display: flex;
-  gap: 15px;
+  gap: 15px; 
+  width: 100%; 
+  justify-content: center; 
 
   button {
-    background-color: #61dafb;
-    color: #282c34;
+    background-color: #3498db; 
+    color: #ffffff; 
     border: none;
     padding: 12px 25px;
     border-radius: 8px;
@@ -141,17 +235,17 @@ body {
     font-weight: bold;
     cursor: pointer;
     transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
-    box-shadow: 0 4px 10px rgba(0, 255, 255, 0.3);
+    box-shadow: 0 4px 10px rgba(52, 152, 219, 0.3);    
 
     &:hover {
-      background-color: #21a1f1;
+      background-color: #2980b9; 
       transform: translateY(-2px);
-      box-shadow: 0 6px 15px rgba(0, 255, 255, 0.5);
+      box-shadow: 0 6px 15px rgba(52, 152, 219, 0.5);
     }
 
     &:active {
       transform: translateY(0);
-      box-shadow: 0 2px 5px rgba(0, 255, 255, 0.2);
+      box-shadow: 0 2px 5px rgba(52, 152, 219, 0.2);
     }
   }
 }

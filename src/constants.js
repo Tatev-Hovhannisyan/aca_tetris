@@ -1,3 +1,4 @@
+
 export const DIRECTIONS = {
   LEFT: "LEFT",
   RIGHT: "RIGHT",
@@ -10,7 +11,7 @@ export const BOARD_HEIGHT = 20;
 export const SHAPES = [
   {
     name: "T",
-    color: "#FF69B4",
+    color: "#FF69B4", 
     shape: [
       [false, true, false],
       [true, true, true],
@@ -19,7 +20,7 @@ export const SHAPES = [
   },
   {
     name: "L",
-    color: "#FFA500",
+    color: "#FFA500", 
     shape: [
       [true, false, false],
       [true, true, true],
@@ -28,7 +29,7 @@ export const SHAPES = [
   },
   {
     name: "J",
-    color: "#006effff",
+    color: "#00BFFF", 
     shape: [
       [false, false, true],
       [true, true, true],
@@ -37,7 +38,7 @@ export const SHAPES = [
   },
   {
     name: "O",
-    color: "#FFFF00",
+    color: "#FFFF00", 
     shape: [
       [true, true],
       [true, true],
@@ -45,7 +46,7 @@ export const SHAPES = [
   },
   {
     name: "S",
-    color: "#32CD32",
+    color: "#32CD32", 
     shape: [
       [false, true, true],
       [true, true, false],
@@ -54,7 +55,7 @@ export const SHAPES = [
   },
   {
     name: "Z",
-    color: "#FF4500",
+    color: "#FF4500", 
     shape: [
       [true, true, false],
       [false, true, true],
@@ -63,7 +64,7 @@ export const SHAPES = [
   },
   {
     name: "I",
-    color: "#1E90FF",
+    color: "#1E90FF", 
     shape: [
       [false, false, false, false],
       [true, true, true, true],
@@ -72,3 +73,17 @@ export const SHAPES = [
     ],
   },
 ];
+
+
+export const ROTATION_STATES = {
+  INITIAL: 0, 
+  RIGHT: 1,   
+  TWO: 2,    
+  LEFT: 3,  
+};
+
+
+export const initialFallSpeed = 500; 
+export const speedDecreasePerLevel = 100; 
+export const scorePerLevel = 10000; 
+export const minFallSpeed = 100; 
