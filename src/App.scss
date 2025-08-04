@@ -81,7 +81,7 @@ body {
   background-color: #2a2a2a;
   border-radius: 2px;
   transition: background-color 0.1s ease-out, box-shadow 0.1s ease-out,
-    border-radius 0.1s ease-out, opacity 0.3s ease-out, transform 0.3s ease-out;
+  border-radius 0.1s ease-out, opacity 0.3s ease-out, transform 0.3s ease-out;
   transform-origin: center center;
 }
 
@@ -219,15 +219,15 @@ body {
 }
 
 .controls {
-  margin-top: 350px; 
+  margin-top: 350px;
   display: flex;
-  gap: 15px; 
-  width: 100%; 
-  justify-content: center; 
+  gap: 15px;
+  width: 100%;
+  justify-content: center;
 
   button {
-    background-color: #3498db; 
-    color: #ffffff; 
+    background-color: #3498db;
+    color: #ffffff;
     border: none;
     padding: 12px 25px;
     border-radius: 8px;
@@ -235,10 +235,10 @@ body {
     font-weight: bold;
     cursor: pointer;
     transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
-    box-shadow: 0 4px 10px rgba(52, 152, 219, 0.3);    
+    box-shadow: 0 4px 10px rgba(52, 152, 219, 0.3);
 
     &:hover {
-      background-color: #2980b9; 
+      background-color: #2980b9;
       transform: translateY(-2px);
       box-shadow: 0 6px 15px rgba(52, 152, 219, 0.5);
     }

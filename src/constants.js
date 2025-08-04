@@ -75,6 +75,32 @@ export const SHAPES = [
 ];
 
 
+// Super Rotation System (SRS) Kick Data
+// Defines offsets for wall kicks during rotation.
+// Each array corresponds to a rotation transition (0->R, R->2, 2->L, L->0).
+export const SRS_KICK_DATA_JLSTZ = [
+  // 0 -> R / R -> 0
+  [[0, 0], [-1, 0], [-1, 1], [0, -2], [-1, -2]],
+  // R -> 2 / 2 -> R
+  [[0, 0], [1, 0], [1, -1], [0, 2], [1, 2]],
+  // 2 -> L / L -> 2
+  [[0, 0], [1, 0], [1, 1], [0, -2], [1, -2]],
+  // L -> 0 / 0 -> L
+  [[0, 0], [-1, 0], [-1, -1], [0, 2], [-1, 2]],
+];
+
+// SRS Kick Data for I shape (unique behavior)
+export const SRS_KICK_DATA_I = [
+  // 0 -> R / R -> 0
+  [[0, 0], [-2, 0], [1, 0], [-2, -1], [1, 2]],
+  // R -> 2 / 2 -> R
+  [[0, 0], [-1, 0], [2, 0], [-1, 2], [2, -1]],
+  // 2 -> L / L -> 2
+  [[0, 0], [2, 0], [-1, 0], [2, 1], [-1, -2]],
+  // L -> 0 / 0 -> L
+  [[0, 0], [1, 0], [-2, 0], [1, -2], [-2, 1]],
+];
+
 export const ROTATION_STATES = {
   INITIAL: 0, 
   RIGHT: 1,   
@@ -83,7 +109,7 @@ export const ROTATION_STATES = {
 };
 
 
-export const initialFallSpeed = 500; 
-export const speedDecreasePerLevel = 100; 
-export const scorePerLevel = 10000; 
-export const minFallSpeed = 100; 
+export const initialFallSpeed = 900; 
+export const intervalDecreasePerLevel = 100; 
+export const scorePerLevel = 1000; 
+export const minFallInterval = 100; 

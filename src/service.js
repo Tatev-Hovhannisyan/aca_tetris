@@ -4,6 +4,8 @@ import {
   BOARD_WIDTH,
   SHAPES,
   ROTATION_STATES,
+  SRS_KICK_DATA_I,
+  SRS_KICK_DATA_JLSTZ,
 } from "./constants";
 import {
   validateBoard,
@@ -14,8 +16,10 @@ import {
   validateRotation,
 } from "./validations";
 
-//Generates a random Tetris shape.
-
+/**
+ * Генерирует случайную фигуру.
+ * @returns {object} Новая фигура.
+ */
 export function getRandomShape() {
   const index = Math.floor(Math.random() * SHAPES.length);
   const selectedShape = SHAPES[index];
@@ -29,12 +33,15 @@ export function getRandomShape() {
     }
   }
 
+  // Вычисляем начальное смещение, чтобы фигура появилась над доской.
   const offSetY = -occupiedRowCount;
   const coords = [];
 
+  // Случайно определяем начальную горизонтальную позицию.
   const maxStartCol = BOARD_WIDTH - shapeMatrix[0].length;
   const startCol = Math.floor(Math.random() * (maxStartCol + 1));
 
+  // Генерируем координаты для новой фигуры.
   for (let i = 0; i < shapeMatrix.length; i++) {
     for (let j = 0; j < shapeMatrix[0].length; j++) {
       if (shapeMatrix[i][j]) {
@@ -53,12 +60,14 @@ export function getRandomShape() {
   };
 }
 
-// Rotates a 2D boolean matrix 90 degrees clockwise.
-
+/**
+ * Вращает 2D матрицу на 90 градусов по часовой стрелке.
+ * @param {boolean[][]} shapeMatrix - Матрица фигуры.
+ * @returns {boolean[][]} Повернутая матрица.
+ */
 export function rotateSHape(shapeMatrix) {
   const height = shapeMatrix.length;
   const width = shapeMatrix[0].length;
-
   const rotated = Array(width)
     .fill(null)
     .map(() => Array(height).fill(false));
@@ -71,8 +80,11 @@ export function rotateSHape(shapeMatrix) {
   return rotated;
 }
 
-//Clears full rows on the board.
-
+/**
+ * Очищает заполненные ряды на доске.
+ * @param {Array<Array<Object>>} board - Текущая игровая доска.
+ * @returns {{newBoard: Array<Array<Object>>, clearedLines: number}} Новая доска и количество очищенных линий.
+ */
 export function clearFullRows(board) {
   const newBoard = [];
   let clearedLines = 0;
@@ -80,7 +92,6 @@ export function clearFullRows(board) {
   for (let i = 0; i < board.length; i++) {
     const row = board[i];
     const isFull = row.every((cell) => cell && cell.isMarked);
-
     if (isFull) {
       clearedLines++;
     } else {
@@ -88,6 +99,7 @@ export function clearFullRows(board) {
     }
   }
 
+  // Добавляем новые пустые ряды сверху.
   while (newBoard.length < board.length) {
     const emptyRow = Array(board[0].length).fill({
       isMarked: false,
@@ -101,23 +113,31 @@ export function clearFullRows(board) {
   return { newBoard, clearedLines };
 }
 
-//Clones only affected rows of the board.
-
+/**
+ * Клонирует только затронутые ряды доски для улучшения производительности.
+ * @param {Array<Array<Object>>} board - Текущая игровая доска.
+ * @param {Array<Object>} oldCoords - Предыдущие координаты фигуры.
+ * @param {Array<Object>} newCoords - Новые координаты фигуры.
+ * @returns {Array<Array<Object>>} Новая доска с клонированными рядами.
+ */
 export function cloneAffectedRows(board, oldCoords, newCoords) {
   const affectedRows = new Set([
     ...oldCoords.map(({ i }) => i),
     ...newCoords.map(({ i }) => i),
   ]);
 
-  const newBoard = board.map((row, i) =>
+  return board.map((row, i) =>
     affectedRows.has(i) ? row.map((cell) => ({ ...cell })) : row
   );
-
-  return newBoard;
 }
 
-//Moves the shape on the board.
-
+/**
+ * Перемещает фигуру по доске в заданном направлении.
+ * @param {Array<Array<Object>>} board - Текущая игровая доска.
+ * @param {Object} shapeObj - Фигура для перемещения.
+ * @param {string} direction - Направление движения.
+ * @returns {{newBoard: Array<Array<Object>>, newShape: Object}} Новая доска и новая фигура.
+ */
 export const move = (board, shapeObj, direction) => {
   validateBoard(board);
   validateShape(shapeObj.coords);
@@ -128,41 +148,26 @@ export const move = (board, shapeObj, direction) => {
   const shapeName = shapeObj.name;
   const rotationState = shapeObj.rotationState;
 
-  const futureShapeCoords = shapeCoords.map(({ i, j }) => {
-    if (direction === DIRECTIONS.DOWN) return { i: i + 1, j };
-    if (direction === DIRECTIONS.LEFT) return { i, j: j - 1 };
-    if (direction === DIRECTIONS.RIGHT) return { i, j: j + 1 };
-    return { i, j };
-  });
-
-  const newBoard = cloneAffectedRows(board, shapeCoords, futureShapeCoords);
+  const newBoard = cloneAffectedRows(board, shapeCoords, shapeCoords);
   const newShapeCoords = [];
+  let newOrigin = { ...shapeObj.origin };
 
   if (direction === DIRECTIONS.LEFT) {
     validateLeftMove(board, shapeCoords);
-
     shapeCoords.forEach(({ i, j }) => {
       if (i >= 0 && i < BOARD_HEIGHT && j >= 0 && j < BOARD_WIDTH) {
         newBoard[i][j] = {
           isMarked: false,
           color: null,
-          isClearing: false,
-          animationDelay: null,
-        };
-      }
-      if (i >= 0 && i < BOARD_HEIGHT && j - 1 >= 0 && j - 1 < BOARD_WIDTH) {
-        newBoard[i][j - 1] = {
-          isMarked: true,
-          color: shapeColor,
           isClearing: false,
           animationDelay: null,
         };
       }
       newShapeCoords.push({ i, j: j - 1 });
     });
+    newOrigin.j -= 1;
   } else if (direction === DIRECTIONS.RIGHT) {
     validateRightMove(board, shapeCoords);
-
     shapeCoords.forEach(({ i, j }) => {
       if (i >= 0 && i < BOARD_HEIGHT && j >= 0 && j < BOARD_WIDTH) {
         newBoard[i][j] = {
@@ -172,22 +177,12 @@ export const move = (board, shapeObj, direction) => {
           animationDelay: null,
         };
       }
-      if (i >= 0 && i < BOARD_HEIGHT && j + 1 >= 0 && j + 1 < BOARD_WIDTH) {
-        newBoard[i][j + 1] = {
-          isMarked: true,
-          color: shapeColor,
-          isClearing: false,
-          animationDelay: null,
-        };
-      }
       newShapeCoords.push({ i, j: j + 1 });
     });
+    newOrigin.j += 1;
   } else if (direction === DIRECTIONS.DOWN) {
     validateDownMove(board, shapeCoords);
-
-    const sortedShape = [...shapeCoords].sort((a, b) => b.i - a.i);
-
-    sortedShape.forEach(({ i, j }) => {
+    shapeCoords.forEach(({ i, j }) => {
       if (i >= 0 && i < BOARD_HEIGHT && j >= 0 && j < BOARD_WIDTH) {
         newBoard[i][j] = {
           isMarked: false,
@@ -196,17 +191,22 @@ export const move = (board, shapeObj, direction) => {
           animationDelay: null,
         };
       }
-      if (i + 1 >= 0 && i + 1 < BOARD_HEIGHT && j >= 0 && j < BOARD_WIDTH) {
-        newBoard[i + 1][j] = {
-          isMarked: true,
-          color: shapeColor,
-          isClearing: false,
-          animationDelay: null,
-        };
-      }
       newShapeCoords.push({ i: i + 1, j });
     });
+    newOrigin.i += 1;
   }
+
+  // Рисуем фигуру на новых координатах.
+  newShapeCoords.forEach(({ i, j }) => {
+    if (i >= 0 && i < BOARD_HEIGHT && j >= 0 && j < BOARD_WIDTH) {
+      newBoard[i][j] = {
+        isMarked: true,
+        color: shapeColor,
+        isClearing: false,
+        animationDelay: null,
+      };
+    }
+  });
 
   return {
     newBoard,
@@ -216,105 +216,97 @@ export const move = (board, shapeObj, direction) => {
       color: shapeColor,
       name: shapeName,
       rotationState: rotationState,
+      origin: newOrigin,
     },
   };
 };
 
-// Rotates the shape on the board without wall kicks.
-
+/**
+ * Вращает фигуру и выполняет проверку сдвига (wall kick) по правилам SRS.
+ * @param {Array<Array<Object>>} board - Текущая игровая доска.
+ * @param {Object} shape - Фигура для вращения.
+ * @returns {{newBoard: Array<Array<Object>>, newShape: Object}} Новая доска и новая фигура.
+ * @throws {Error} если вращение не удалось.
+ */
 export function rotate(board, shape) {
-  const { coords, shape: shapeMatrix, name, color, rotationState } = shape;
+  const { coords, shape: shapeMatrix, name, color, rotationState, origin } = shape;
   const nextRotationState = (rotationState + 1) % 4;
-  
-  // Calculate the pivot point (center of the shape)
-  const avgI = coords.reduce((sum, {i}) => sum + i, 0) / coords.length;
-  const avgJ = coords.reduce((sum, {j}) => sum + j, 0) / coords.length;
-  const pivotI = Math.round(avgI);
-  const pivotJ = Math.round(avgJ);
+
+  const kickData = name === "I" ? SRS_KICK_DATA_I : SRS_KICK_DATA_JLSTZ;
+  const kicks = kickData[rotationState];
 
   const rotatedMatrix = rotateSHape(shapeMatrix);
-  
-  // Calculate new coordinates relative to pivot
-  const newCoords = [];
+
+  // Вычисляем потенциальные новые координаты на основе повернутой матрицы и текущего origin.
+  const potentialNewCoords = [];
   for (let i = 0; i < rotatedMatrix.length; i++) {
     for (let j = 0; j < rotatedMatrix[0].length; j++) {
       if (rotatedMatrix[i][j]) {
-        // Calculate offset from original position
-        const offsetI = i - Math.floor(shapeMatrix.length / 2);
-        const offsetJ = j - Math.floor(shapeMatrix[0].length / 2);
-        
-        newCoords.push({ 
-          i: pivotI + offsetI, 
-          j: pivotJ + offsetJ 
-        });
+        potentialNewCoords.push({ i: origin.i + i, j: origin.j + j });
       }
     }
   }
 
-  // Try wall kicks if rotation would go out of bounds
-  const kickOffsets = [
-    {i: 0, j: 0},   // no kick
-    {i: 0, j: -1},  // left kick
-    {i: 0, j: 1},   // right kick
-    {i: -1, j: 0},  // up kick
-    {i: 1, j: 0},   // down kick
-  ];
-
-  let validRotation = null;
-
-  for (const offset of kickOffsets) {
-    const kickedCoords = newCoords.map(({i, j}) => ({
-      i: i + offset.i,
-      j: j + offset.j
+  // Применяем сдвиги (kicks) и проверяем валидность.
+  for (const [kickJ, kickI] of kicks) {
+    const kickedCoords = potentialNewCoords.map(({ i, j }) => ({
+      i: i + kickI,
+      j: j + kickJ,
     }));
 
     try {
       validateRotation(board, coords, kickedCoords);
-      validRotation = kickedCoords;
-      break;
+
+      // Если проверка пройдена, это валидное вращение.
+      const newBoard = cloneAffectedRows(board, coords, kickedCoords);
+
+      // Очищаем старую позицию фигуры на доске.
+      coords.forEach(({ i, j }) => {
+        if (i >= 0 && i < BOARD_HEIGHT && j >= 0 && j < BOARD_WIDTH) {
+          newBoard[i][j] = {
+            isMarked: false,
+            color: null,
+            isClearing: false,
+            animationDelay: null,
+          };
+        }
+      });
+
+      // Рисуем новую позицию фигуры на доске.
+      kickedCoords.forEach(({ i, j }) => {
+        if (i >= 0 && i < BOARD_HEIGHT && j >= 0 && j < BOARD_WIDTH) {
+          newBoard[i][j] = {
+            isMarked: true,
+            color: color,
+            isClearing: false,
+            animationDelay: null,
+          };
+        }
+      });
+
+      // Обновляем origin с учетом сдвига.
+      const newOrigin = {
+        i: origin.i + kickI,
+        j: origin.j + kickJ,
+      };
+
+      return {
+        newBoard,
+        newShape: {
+          coords: kickedCoords,
+          shape: rotatedMatrix,
+          color,
+          name,
+          origin: newOrigin,
+          rotationState: nextRotationState,
+        },
+      };
     } catch (e) {
+      // Если вращение не удалось, пробуем следующий сдвиг.
       continue;
     }
   }
 
-  if (!validRotation) {
-    throw new Error("Rotation failed after all kick attempts");
-  }
-
-  const newBoard = cloneAffectedRows(board, coords, validRotation);
-
-  // Clear old position
-  coords.forEach(({ i, j }) => {
-    if (i >= 0 && i < BOARD_HEIGHT && j >= 0 && j < BOARD_WIDTH) {
-      newBoard[i][j] = {
-        isMarked: false,
-        color: null,
-        isClearing: false,
-        animationDelay: null,
-      };
-    }
-  });
-
-  // Draw new position
-  validRotation.forEach(({ i, j }) => {
-    if (i >= 0 && i < BOARD_HEIGHT && j >= 0 && j < BOARD_WIDTH) {
-      newBoard[i][j] = {
-        isMarked: true,
-        color: color,
-        isClearing: false,
-        animationDelay: null,
-      };
-    }
-  });
-
-  return {
-    newBoard,
-    newShape: {
-      coords: validRotation,
-      shape: rotatedMatrix,
-      color,
-      name,
-      rotationState: nextRotationState,
-    },
-  };
+  // Если ни один сдвиг не сработал, вращение невозможно.
+  throw new Error("Rotation failed after all kick attempts");
 }
