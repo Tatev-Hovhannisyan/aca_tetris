@@ -74,6 +74,7 @@ export default function App() {
   const [level, setLevel] = useState(1);
   const [lines, setLines] = useState(0);
   const gameRef = useRef(null);
+  const fallTimerRef = useRef(null);
 
   const moveDown = useCallback(() => {
     if (isGameOver || isPaused) return;
@@ -133,10 +134,22 @@ export default function App() {
 
   useEffect(() => {
     if (isGameOver || isPaused) {
+      if (fallTimerRef.current) {
+        clearTimeout(fallTimerRef.current);
+        fallTimerRef.current = null;
+      }
       return;
     }
-    const timer = setTimeout(moveDown, fallSpeed);
-    return () => clearTimeout(timer);
+    if (fallTimerRef.current) {
+      clearTimeout(fallTimerRef.current);
+    }
+    fallTimerRef.current = setTimeout(moveDown, fallSpeed);
+    return () => {
+      if (fallTimerRef.current) {
+        clearTimeout(fallTimerRef.current);
+        fallTimerRef.current = null;
+      }
+    };
   }, [moveDown, isGameOver, isPaused, fallSpeed]);
 
   useEffect(() => {
@@ -189,6 +202,11 @@ export default function App() {
           const { newBoard, newShape } = rotate(board, currentShape);
           setBoard(newBoard);
           setCurrentShape(newShape);
+          // Reset fall timer after rotation to ensure continuous falling
+          if (fallTimerRef.current) {
+            clearTimeout(fallTimerRef.current);
+          }
+          fallTimerRef.current = setTimeout(moveDown, fallSpeed);
         }
       } catch (error) {
         console.error("Invalid move:", error.message);
@@ -196,7 +214,7 @@ export default function App() {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [board, currentShape, isGameOver, isPaused, moveDown]);
+  }, [board, currentShape, isGameOver, isPaused, moveDown, fallSpeed]);
 
   const merged = getMergedBoard(board, currentShape);
   const nextShapeDisplayMatrix = getShapeMatrixForDisplay(nextShape);
