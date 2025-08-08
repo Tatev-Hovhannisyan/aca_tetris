@@ -16,10 +16,7 @@ import {
   validateRotation,
 } from "./validations";
 
-/**
- * Генерирует случайную фигуру.
- * @returns {object} Новая фигура.
- */
+
 export function getRandomShape() {
   const index = Math.floor(Math.random() * SHAPES.length);
   const selectedShape = SHAPES[index];
@@ -33,15 +30,15 @@ export function getRandomShape() {
     }
   }
 
-  // Вычисляем начальное смещение, чтобы фигура появилась над доской.
+  // Calculate initial offset for the shape to appear above the board.
   const offSetY = -occupiedRowCount;
   const coords = [];
 
-  // Случайно определяем начальную горизонтальную позицию.
+  // Randomly determine the initial horizontal position.
   const maxStartCol = BOARD_WIDTH - shapeMatrix[0].length;
   const startCol = Math.floor(Math.random() * (maxStartCol + 1));
 
-  // Генерируем координаты для новой фигуры.
+  // Generate coordinates for the new shape.
   for (let i = 0; i < shapeMatrix.length; i++) {
     for (let j = 0; j < shapeMatrix[0].length; j++) {
       if (shapeMatrix[i][j]) {
@@ -49,6 +46,7 @@ export function getRandomShape() {
       }
     }
   }
+  console.log("getRandomShape generated:", { coords, color, shape: shapeMatrix, name: selectedShape.name, origin: { i: offSetY, j: startCol }, rotationState: ROTATION_STATES.INITIAL });
 
   return {
     coords,
@@ -60,11 +58,6 @@ export function getRandomShape() {
   };
 }
 
-/**
- * Вращает 2D матрицу на 90 градусов по часовой стрелке.
- * @param {boolean[][]} shapeMatrix - Матрица фигуры.
- * @returns {boolean[][]} Повернутая матрица.
- */
 export function rotateSHape(shapeMatrix) {
   const height = shapeMatrix.length;
   const width = shapeMatrix[0].length;
@@ -80,11 +73,7 @@ export function rotateSHape(shapeMatrix) {
   return rotated;
 }
 
-/**
- * Очищает заполненные ряды на доске.
- * @param {Array<Array<Object>>} board - Текущая игровая доска.
- * @returns {{newBoard: Array<Array<Object>>, clearedLines: number}} Новая доска и количество очищенных линий.
- */
+
 export function clearFullRows(board) {
   const newBoard = [];
   let clearedLines = 0;
@@ -99,7 +88,7 @@ export function clearFullRows(board) {
     }
   }
 
-  // Добавляем новые пустые ряды сверху.
+  // Add new empty rows to the top.
   while (newBoard.length < board.length) {
     const emptyRow = Array(board[0].length).fill({
       isMarked: false,
@@ -113,13 +102,9 @@ export function clearFullRows(board) {
   return { newBoard, clearedLines };
 }
 
-/**
- * Клонирует только затронутые ряды доски для улучшения производительности.
- * @param {Array<Array<Object>>} board - Текущая игровая доска.
- * @param {Array<Object>} oldCoords - Предыдущие координаты фигуры.
- * @param {Array<Object>} newCoords - Новые координаты фигуры.
- * @returns {Array<Array<Object>>} Новая доска с клонированными рядами.
- */
+
+//Clones only the affected rows of the board for performance improvement.
+
 export function cloneAffectedRows(board, oldCoords, newCoords) {
   const affectedRows = new Set([
     ...oldCoords.map(({ i }) => i),
@@ -131,13 +116,7 @@ export function cloneAffectedRows(board, oldCoords, newCoords) {
   );
 }
 
-/**
- * Перемещает фигуру по доске в заданном направлении.
- * @param {Array<Array<Object>>} board - Текущая игровая доска.
- * @param {Object} shapeObj - Фигура для перемещения.
- * @param {string} direction - Направление движения.
- * @returns {{newBoard: Array<Array<Object>>, newShape: Object}} Новая доска и новая фигура.
- */
+
 export const move = (board, shapeObj, direction) => {
   validateBoard(board);
   validateShape(shapeObj.coords);
@@ -148,58 +127,48 @@ export const move = (board, shapeObj, direction) => {
   const shapeName = shapeObj.name;
   const rotationState = shapeObj.rotationState;
 
-  const newBoard = cloneAffectedRows(board, shapeCoords, shapeCoords);
+  // Create a full copy of the board for all operations
+  const tempBoard = board.map(row => row.map(cell => ({ ...cell })));
+
+  // Clear the old position of the shape on this temporary board
+  shapeCoords.forEach(({ i, j }) => {
+    if (i >= 0 && i < BOARD_HEIGHT && j >= 0 && j < BOARD_WIDTH) {
+      tempBoard[i][j] = {
+        isMarked: false,
+        color: null,
+        isClearing: false,
+        animationDelay: null,
+      };
+    }
+  });
+
   const newShapeCoords = [];
   let newOrigin = { ...shapeObj.origin };
 
   if (direction === DIRECTIONS.LEFT) {
-    validateLeftMove(board, shapeCoords);
+    validateLeftMove(tempBoard, shapeCoords); 
     shapeCoords.forEach(({ i, j }) => {
-      if (i >= 0 && i < BOARD_HEIGHT && j >= 0 && j < BOARD_WIDTH) {
-        newBoard[i][j] = {
-          isMarked: false,
-          color: null,
-          isClearing: false,
-          animationDelay: null,
-        };
-      }
       newShapeCoords.push({ i, j: j - 1 });
     });
     newOrigin.j -= 1;
   } else if (direction === DIRECTIONS.RIGHT) {
-    validateRightMove(board, shapeCoords);
+    validateRightMove(tempBoard, shapeCoords); 
     shapeCoords.forEach(({ i, j }) => {
-      if (i >= 0 && i < BOARD_HEIGHT && j >= 0 && j < BOARD_WIDTH) {
-        newBoard[i][j] = {
-          isMarked: false,
-          color: null,
-          isClearing: false,
-          animationDelay: null,
-        };
-      }
       newShapeCoords.push({ i, j: j + 1 });
     });
     newOrigin.j += 1;
   } else if (direction === DIRECTIONS.DOWN) {
-    validateDownMove(board, shapeCoords);
+    validateDownMove(tempBoard, shapeCoords); 
     shapeCoords.forEach(({ i, j }) => {
-      if (i >= 0 && i < BOARD_HEIGHT && j >= 0 && j < BOARD_WIDTH) {
-        newBoard[i][j] = {
-          isMarked: false,
-          color: null,
-          isClearing: false,
-          animationDelay: null,
-        };
-      }
       newShapeCoords.push({ i: i + 1, j });
     });
     newOrigin.i += 1;
   }
 
-  // Рисуем фигуру на новых координатах.
+  // Draw the shape at the new coordinates on the same temporary board.
   newShapeCoords.forEach(({ i, j }) => {
     if (i >= 0 && i < BOARD_HEIGHT && j >= 0 && j < BOARD_WIDTH) {
-      newBoard[i][j] = {
+      tempBoard[i][j] = {
         isMarked: true,
         color: shapeColor,
         isClearing: false,
@@ -209,7 +178,7 @@ export const move = (board, shapeObj, direction) => {
   });
 
   return {
-    newBoard,
+    newBoard: tempBoard, 
     newShape: {
       coords: newShapeCoords,
       shape: shapeMatrix,
@@ -221,14 +190,10 @@ export const move = (board, shapeObj, direction) => {
   };
 };
 
-/**
- * Вращает фигуру и выполняет проверку сдвига (wall kick) по правилам SRS.
- * @param {Array<Array<Object>>} board - Текущая игровая доска.
- * @param {Object} shape - Фигура для вращения.
- * @returns {{newBoard: Array<Array<Object>>, newShape: Object}} Новая доска и новая фигура.
- * @throws {Error} если вращение не удалось.
- */
+
 export function rotate(board, shape) {
+
+
   const { coords, shape: shapeMatrix, name, color, rotationState, origin } = shape;
   const nextRotationState = (rotationState + 1) % 4;
 
@@ -237,7 +202,8 @@ export function rotate(board, shape) {
 
   const rotatedMatrix = rotateSHape(shapeMatrix);
 
-  // Вычисляем потенциальные новые координаты на основе повернутой матрицы и текущего origin.
+
+  // Calculate potential new coordinates based on the rotated matrix and current origin.
   const potentialNewCoords = [];
   for (let i = 0; i < rotatedMatrix.length; i++) {
     for (let j = 0; j < rotatedMatrix[0].length; j++) {
@@ -246,36 +212,40 @@ export function rotate(board, shape) {
       }
     }
   }
+ 
+  // Create a full copy of the board for all operations
+  const tempBoard = board.map(row => row.map(cell => ({ ...cell })));
 
-  // Применяем сдвиги (kicks) и проверяем валидность.
+  // Clear the old position of the shape on this temporary board for validation
+  coords.forEach(({ i, j }) => {
+    if (i >= 0 && i < BOARD_HEIGHT && j >= 0 && j < BOARD_WIDTH) {
+      tempBoard[i][j] = {
+        isMarked: false,
+        color: null,
+        isClearing: false,
+        animationDelay: null,
+      };
+    }
+  });
+  
+  // Loop through the kick data array to find the first available position.
   for (const [kickJ, kickI] of kicks) {
     const kickedCoords = potentialNewCoords.map(({ i, j }) => ({
       i: i + kickI,
       j: j + kickJ,
     }));
+    console.log(`Trying kick [${kickJ}, ${kickI}]. Kicked coords:`, kickedCoords);
 
     try {
-      validateRotation(board, coords, kickedCoords);
+      // Validate the new shape position on the temporary board.
+      validateRotation(tempBoard, coords, kickedCoords); 
+      console.log(`Kick [${kickJ}, ${kickI}] succeeded!`);
 
-      // Если проверка пройдена, это валидное вращение.
-      const newBoard = cloneAffectedRows(board, coords, kickedCoords);
-
-      // Очищаем старую позицию фигуры на доске.
-      coords.forEach(({ i, j }) => {
-        if (i >= 0 && i < BOARD_HEIGHT && j >= 0 && j < BOARD_WIDTH) {
-          newBoard[i][j] = {
-            isMarked: false,
-            color: null,
-            isClearing: false,
-            animationDelay: null,
-          };
-        }
-      });
-
-      // Рисуем новую позицию фигуры на доске.
+      // If validation passes, this is a valid rotation.
+      // Now, draw the new shape position on the same temporary board.
       kickedCoords.forEach(({ i, j }) => {
         if (i >= 0 && i < BOARD_HEIGHT && j >= 0 && j < BOARD_WIDTH) {
-          newBoard[i][j] = {
+          tempBoard[i][j] = {
             isMarked: true,
             color: color,
             isClearing: false,
@@ -284,14 +254,16 @@ export function rotate(board, shape) {
         }
       });
 
-      // Обновляем origin с учетом сдвига.
+      // Update the origin considering the kick.
       const newOrigin = {
         i: origin.i + kickI,
         j: origin.j + kickJ,
       };
+      console.log("New origin after rotation and kick:", newOrigin);
 
+      console.log("--- rotate function finished successfully ---");
       return {
-        newBoard,
+        newBoard: tempBoard, // Return the modified temporary board
         newShape: {
           coords: kickedCoords,
           shape: rotatedMatrix,
@@ -302,11 +274,12 @@ export function rotate(board, shape) {
         },
       };
     } catch (e) {
-      // Если вращение не удалось, пробуем следующий сдвиг.
-      continue;
+      console.error(`Rotation failed with kick [${kickJ}, ${kickI}]:`, e.message);
+      continue; // Try the next kick.
     }
   }
 
-  // Если ни один сдвиг не сработал, вращение невозможно.
+  // If no kick succeeded, rotation is impossible.
+  console.error("Rotation failed after all kick attempts. No valid position found.");
   throw new Error("Rotation failed after all kick attempts");
 }

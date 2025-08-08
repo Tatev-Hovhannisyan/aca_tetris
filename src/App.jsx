@@ -14,8 +14,13 @@ import {
   rotate,
   clearFullRows,
 } from "./service";
+import GameBoard from "./components/GameBoard";
+import GameInfo from "./components/GameInfo";   
+import NextShapeDisplay from "./components/NextShapeDisplay";
+import GameControls from "./components/GameControls"; 
+import GameStatusOverlay from "./components/GameStatusOverlay"; 
 
-// App component and styling below for a complete, runnable example.
+
 const initialBoard = () =>
   Array(BOARD_HEIGHT)
     .fill(null)
@@ -37,32 +42,6 @@ function getMergedBoard(board, shape) {
   return merged;
 }
 
-function getShapeMatrixForDisplay(shape) {
-  if (!shape || !shape.shape) return [];
-  const matrix = shape.shape;
-  let minRow = matrix.length, maxRow = -1, minCol = matrix[0].length, maxCol = -1;
-  for (let i = 0; i < matrix.length; i++) {
-    for (let j = 0; j < matrix[i].length; j++) {
-      if (matrix[i][j]) {
-        if (i < minRow) minRow = i;
-        if (i > maxRow) maxRow = i;
-        if (j < minCol) minCol = j;
-        if (j > maxCol) maxCol = j;
-      }
-    }
-  }
-  if (maxRow === -1) return [];
-  const trimmedMatrix = [];
-  for (let i = minRow; i <= maxRow; i++) {
-    const newRow = [];
-    for (let j = minCol; j <= maxCol; j++) {
-      newRow.push(matrix[i][j]);
-    }
-    trimmedMatrix.push(newRow);
-  }
-  return trimmedMatrix;
-}
-
 export default function App() {
   const [board, setBoard] = useState(initialBoard);
   const [currentShape, setCurrentShape] = useState(getRandomShape);
@@ -77,6 +56,10 @@ export default function App() {
 
   const moveDown = useCallback(() => {
     if (isGameOver || isPaused) return;
+    if (!currentShape) {
+      console.log("moveDown: currentShape is null, likely during line clear animation or new shape spawn. Skipping.");
+      return;
+    }
     try {
       const { newBoard, newShape } = move(board, currentShape, DIRECTIONS.DOWN);
       setBoard(newBoard);
@@ -110,7 +93,7 @@ export default function App() {
             return row;
           });
           setBoard(boardForAnimation);
-          setCurrentShape(null);
+          setCurrentShape(null); // Set to null during animation
           const animationDuration = 300;
           const maxDelay = (BOARD_WIDTH - 1) * 30;
           const totalAnimationTime = animationDuration + maxDelay;
@@ -137,11 +120,11 @@ export default function App() {
     }
     const timer = setTimeout(moveDown, fallSpeed);
     return () => clearTimeout(timer);
-  }, [moveDown, isGameOver, isPaused, fallSpeed]);
+  }, [moveDown, isGameOver, isPaused, fallSpeed, currentShape]);
 
   useEffect(() => {
     const newLevel = Math.floor(lines / 10) + 1; // Level up every 10 lines
-    let calculatedFallSpeed = initialFallSpeed - ((newLevel - 1) * intervalDecreasePerLevel);
+    let calculatedFallSpeed = initialFallSpeed - (newLevel - 1) * intervalDecreasePerLevel;
     calculatedFallSpeed = Math.max(calculatedFallSpeed, minFallInterval);
     if (calculatedFallSpeed !== fallSpeed) {
       setFallSpeed(calculatedFallSpeed);
@@ -166,11 +149,15 @@ export default function App() {
     }
   }, [initialFallSpeed]);
 
+  const handleTogglePause = useCallback(() => {
+    setIsPaused((prev) => !prev);
+  }, []);
+
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (isGameOver) return;
       if (e.key === "p" || e.key === "P" || e.key === " ") {
-        setIsPaused((prev) => !prev);
+        handleTogglePause();
         return;
       }
       if (isPaused) return;
@@ -189,74 +176,29 @@ export default function App() {
           const { newBoard, newShape } = rotate(board, currentShape);
           setBoard(newBoard);
           setCurrentShape(newShape);
+   
         }
       } catch (error) {
-        console.error("Invalid move:", error.message);
+        console.error("Invalid move or rotation:", error.message);
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [board, currentShape, isGameOver, isPaused, moveDown]);
+  }, [board, currentShape, isGameOver, isPaused, moveDown, handleTogglePause]);
 
-  const merged = getMergedBoard(board, currentShape);
-  const nextShapeDisplayMatrix = getShapeMatrixForDisplay(nextShape);
+  const mergedBoard = getMergedBoard(board, currentShape);
 
   return (
     <div className="container" ref={gameRef} tabIndex={0}>
-      {isGameOver && (
-        <div className="game-over">
-          Game Over
-          <button className="restart-button" onClick={restartGame}>Restart</button>
-        </div>
-      )}
-      {isPaused && !isGameOver && <div className="game-paused">Paused</div>}
+      <GameStatusOverlay isGameOver={isGameOver} isPaused={isPaused} onRestartGame={restartGame} />
       <div className="board-and-info">
-        <div className="board">
-          {merged.map((row, i) => (
-            row.map((cell, j) => (
-              <div
-                key={`${i}-${j}`}
-                className={`cell ${cell.isMarked ? "marked" : ""} ${cell.isClearing ? "clearing" : ""}`}
-                style={{
-                  backgroundColor: cell.color || "transparent",
-                  transitionDelay: cell.animationDelay || '0s'
-                }}
-              />
-            ))
-          ))}
-        </div>
+        <GameBoard mergedBoard={mergedBoard} />
         <div className="side-info">
-          <div className="score-level-display">
-            <div className="info-box">Score: {score}</div>
-            <div className="info-box">Level: {level}</div>
-            <div className="info-box">Lines: {lines}</div>
-          </div>
-          <div className="next-shape-container">
-            <h3>Next Shape:</h3>
-            <div className="next-shape-grid">
-              {Array(4).fill(null).map((_, i) => (
-                Array(4).fill(null).map((__, j) => {
-                  const isOccupied = nextShapeDisplayMatrix[i] && nextShapeDisplayMatrix[i][j];
-                  return (
-                    <div
-                      key={`next-${i}-${j}`}
-                      className={`cell-mini ${isOccupied ? "marked-mini" : ""}`}
-                      style={{ backgroundColor: isOccupied ? nextShape.color : "transparent" }}
-                    />
-                  );
-                })
-              ))}
-            </div>
-          </div>
-          <div className="controls">
-            <button onClick={() => setIsPaused((prev) => !prev)}>
-              {isPaused ? "Resume" : "Pause"}
-            </button>
-            <button onClick={restartGame}>Restart</button>
-          </div>
+          <GameInfo score={score} level={level} lines={lines} />
+          <NextShapeDisplay nextShape={nextShape} />
+          <GameControls isPaused={isPaused} onTogglePause={handleTogglePause} onRestartGame={restartGame} />
         </div>
       </div>
     </div>
   );
 }
-
