@@ -1,16 +1,27 @@
-import React from 'react';
+import React from "react";
 
-export default function GameStatusOverlay({ isGameOver, isPaused, onRestartGame }) {
+export default function GameStatusOverlay({
+  isGameOver,
+  isPaused,
+  onRestartGame,
+}) {
   if (isGameOver) {
     return (
-      <div className="game-over">
-        Game Over
-        <button className="restart-button" onClick={onRestartGame}>Restart</button>
+      <div className="game-status-overlay">
+        <div className="game-over">Game Over</div>
+        <button className="restart-button" onClick={onRestartGame}>
+          Restart
+        </button>
       </div>
     );
   }
   if (isPaused) {
-    return <div className="game-paused">Paused</div>;
+    // Изменено: Оборачиваем div с классом "game-paused" в "game-status-overlay"
+    return (
+      <div className="game-status-overlay">
+        <div className="game-paused">Paused</div>
+      </div>
+    );
   }
   return null;
 }

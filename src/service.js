@@ -74,6 +74,18 @@ export function rotateSHape(shapeMatrix) {
 }
 
 
+export function getMergedBoard(board, shape) {
+  const merged = board.map((row) => row.map((cell) => ({ ...cell })));
+  if (shape) {
+    shape.coords.forEach(({ i, j }) => {
+      if (i >= 0 && i < BOARD_HEIGHT && j >= 0 && j < BOARD_WIDTH) {
+        merged[i][j] = { isMarked: true, color: shape.color, isClearing: false, animationDelay: null };
+      }
+    });
+  }
+  return merged;
+}
+
 export function clearFullRows(board) {
   const newBoard = [];
   let clearedLines = 0;
