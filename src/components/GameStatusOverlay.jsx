@@ -15,13 +15,14 @@ export default function GameStatusOverlay({
       </div>
     );
   }
+
   if (isPaused) {
-    // Изменено: Оборачиваем div с классом "game-paused" в "game-status-overlay"
     return (
       <div className="game-status-overlay">
         <div className="game-paused">Paused</div>
       </div>
     );
   }
+
   return null;
 }

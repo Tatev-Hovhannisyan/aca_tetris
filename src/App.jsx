@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from "react";
-import "./App.scss"; // Убедитесь, что этот импорт присутствует и корректен
+import "./App.scss";
 import {
   BOARD_HEIGHT,
   BOARD_WIDTH,
@@ -22,7 +22,6 @@ import GameStatusOverlay from "./components/GameStatusOverlay";
 import MainMenu from "./components/MainMenu";
 import OptionsScreen from "./components/OptionsScreen";
 
-// Initial board setup
 const initialBoard = () =>
   Array(BOARD_HEIGHT)
     .fill(null)
@@ -32,7 +31,6 @@ const initialBoard = () =>
         .map(() => ({ isMarked: false, color: null, isClearing: false, animationDelay: null }))
     );
 
-// Helper to merge current shape into the board for display
 function getMergedBoard(board, shape) {
   const merged = board.map((row) => row.map((cell) => ({ ...cell })));
   if (shape) {
@@ -47,7 +45,6 @@ function getMergedBoard(board, shape) {
 
 export default function App() {
   const [board, setBoard] = useState(initialBoard);
-  // currentShape starts as null when in menu state
   const [currentShape, setCurrentShape] = useState(null); 
   const [nextShape, setNextShape] = useState(getRandomShape);
   const [isGameOver, setIsGameOver] = useState(false);
@@ -57,14 +54,11 @@ export default function App() {
   const [level, setLevel] = useState(1);
   const [lines, setLines] = useState(0);
   const gameRef = useRef(null);
+  const [gameState, setGameState] = useState('menu');
 
-  // New state to manage game screen: 'menu', 'playing', 'options'
-  const [gameState, setGameState] = useState('menu'); // Start with the menu screen
-
-  // Function to start the game
   const startGame = useCallback(() => {
     setBoard(initialBoard());
-    setCurrentShape(getRandomShape()); // Only generate current shape when game starts
+    setCurrentShape(getRandomShape());
     setNextShape(getRandomShape());
     setIsGameOver(false);
     setScore(0);
@@ -72,33 +66,28 @@ export default function App() {
     setFallSpeed(initialFallSpeed);
     setLevel(1);
     setLines(0);
-    setGameState('playing'); // Change game state to playing
+    setGameState('playing');
     if (gameRef.current) {
-      gameRef.current.focus(); // Focus the game board for keyboard input
+      gameRef.current.focus();
     }
   }, [initialFallSpeed]);
 
-  // Function to show options screen
   const showOptions = useCallback(() => {
     setGameState('options');
   }, []);
 
-  // Function to go back to main menu
   const goBackToMenu = useCallback(() => {
     setGameState('menu');
-    setBoard(initialBoard()); // Reset board when going back to menu
-    setCurrentShape(null); // No active shape in menu
-    setIsGameOver(false); // Clear game over state if returning from it
-    setIsPaused(false); // Clear paused state if returning from it
+    setBoard(initialBoard());
+    setCurrentShape(null);
+    setIsGameOver(false);
+    setIsPaused(false);
   }, []);
 
   const moveDown = useCallback(() => {
-    // Only move down if game is playing, not over, and not paused
     if (gameState !== 'playing' || isGameOver || isPaused) return;
-    if (!currentShape) {
-      console.log("moveDown: currentShape is null, likely during line clear animation or new shape spawn. Skipping.");
-      return;
-    }
+    if (!currentShape) return;
+
     try {
       const { newBoard, newShape } = move(board, currentShape, DIRECTIONS.DOWN);
       setBoard(newBoard);
@@ -114,12 +103,14 @@ export default function App() {
             landedBoard[i][j] = { isMarked: true, color: currentShape.color, isClearing: false, animationDelay: null };
           }
         });
+
         const rowsToClearIndexes = [];
         for (let i = 0; i < landedBoard.length; i++) {
           if (landedBoard[i].every(cell => cell && cell.isMarked)) {
             rowsToClearIndexes.push(i);
           }
         }
+
         if (rowsToClearIndexes.length > 0) {
           const boardForAnimation = landedBoard.map((row, rowIndex) => {
             if (rowsToClearIndexes.includes(rowIndex)) {
@@ -134,7 +125,7 @@ export default function App() {
             return row;
           });
           setBoard(boardForAnimation);
-          setCurrentShape(null); // Set to null during animation
+          setCurrentShape(null);
           const animationDuration = 300;
           const maxDelay = (BOARD_WIDTH - 1) * 30;
           const totalAnimationTime = animationDuration + maxDelay;
@@ -156,7 +147,6 @@ export default function App() {
   }, [board, currentShape, isGameOver, isPaused, nextShape, gameState]);
 
   useEffect(() => {
-    // Only set timer if game is playing, not over, and not paused
     if (gameState !== 'playing' || isGameOver || isPaused) {
       return;
     }
@@ -165,7 +155,7 @@ export default function App() {
   }, [moveDown, isGameOver, isPaused, fallSpeed, currentShape, gameState]);
 
   useEffect(() => {
-    const newLevel = Math.floor(lines / 10) + 1; // Level up every 10 lines
+    const newLevel = Math.floor(lines / 10) + 1;
     let calculatedFallSpeed = initialFallSpeed - (newLevel - 1) * intervalDecreasePerLevel;
     calculatedFallSpeed = Math.max(calculatedFallSpeed, minFallInterval);
     if (calculatedFallSpeed !== fallSpeed) {
@@ -177,11 +167,10 @@ export default function App() {
   }, [lines, fallSpeed, level, initialFallSpeed, intervalDecreasePerLevel, minFallInterval]);
 
   const restartGame = useCallback(() => {
-    startGame(); // Use startGame to reset and enter playing state
+    startGame();
   }, [startGame]);
 
   const handleTogglePause = useCallback(() => {
-    // Only allow pausing if the game is actually playing
     if (gameState === 'playing') {
       setIsPaused((prev) => !prev);
     }
@@ -189,16 +178,13 @@ export default function App() {
 
   useEffect(() => {
     const handleKeyDown = (e) => {
-      // Only handle key presses if the game is in 'playing' state
       if (gameState !== 'playing' || isGameOver) return;
-      
-      // Handle pause key regardless of pause state, but within playing state
+
       if (e.key === "p" || e.key === "P" || e.key === " ") {
         handleTogglePause();
         return;
       }
-      
-      // Prevent other moves if paused
+
       if (isPaused) return;
 
       try {
@@ -229,7 +215,6 @@ export default function App() {
 
   return (
     <div className="container" ref={gameRef} tabIndex={0}>
-      {/* Conditionally render the entire game display or menu/options */}
       {gameState === 'menu' && (
         <MainMenu onStartGame={startGame} onShowOptions={showOptions} />
       )}
@@ -238,7 +223,6 @@ export default function App() {
       )}
       {gameState === 'playing' && (
         <>
-          {/* Game Status Overlay still an overlay, specific to playing state */}
           {(isGameOver || isPaused) && (
             <GameStatusOverlay isGameOver={isGameOver} isPaused={isPaused} onRestartGame={restartGame} />
           )}
